@@ -11,6 +11,8 @@ export type AuthContextDataPorps = {
   signIn: (email: string, password: string) => Promise<void>
   isLoadingUserStorageData: boolean,
   signOut: () => Promise<void>
+  updateUserProfile: (userUpdated: userDTO) => Promise<void>
+  refreshedToken: string
 }
 
 type AuthContenxtProviderProps = {
@@ -22,6 +24,7 @@ export const AuthContext = createContext<AuthContextDataPorps>({} as AuthContext
 export function AuthContextProvider({ children }: AuthContenxtProviderProps) {
 
   const [user, setUser] = useState({} as userDTO)
+  const [refreshedToken, setrefreshedToken] = useState('')
   const [isLoadingUserStorageData, setIsLoadingUserStorageData] = useState(true)
 
   function UserAndTokenUpdate(userData: userDTO, token: string) {
@@ -67,12 +70,20 @@ export function AuthContextProvider({ children }: AuthContenxtProviderProps) {
     }
   }
 
+  async function updateUserProfile(userUpdated: userDTO) {
+    try {
+      setUser(userUpdated)
+      await storageUserSave(userUpdated)
+    } catch (error) {
+      throw error
+    }
+  }
+
   async function loadUserData() {
     try {
       setIsLoadingUserStorageData(true)
       const userLogged = await storageUserGet();
       const token = await storageAuthTokenGet();
-      console.log(token)
 
       if (token && userLogged) {
         UserAndTokenUpdate(userLogged, token)
@@ -84,12 +95,23 @@ export function AuthContextProvider({ children }: AuthContenxtProviderProps) {
     }
   }
 
+  function refreshTokenUpdated(newtoken: string) {
+    setrefreshedToken(newtoken)
+  }
+
   useEffect(() => {
     loadUserData()
   }, [])
 
+
+  useEffect(() => {
+    const subscribe = api.registerInterceptTokenManager({ signOut, refreshTokenUpdated })
+
+    return () => { subscribe() }
+  }, [signOut])
+
   return (
-    <AuthContext.Provider value={{ user, signIn, signOut, isLoadingUserStorageData, }}>
+    <AuthContext.Provider value={{ user, signIn, signOut, updateUserProfile, isLoadingUserStorageData, refreshedToken, }}>
       {children}
     </AuthContext.Provider>
   )

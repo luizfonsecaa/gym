@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { useNavigation, useFocusEffect } from "@react-navigation/native";
-import { HStack, VStack, FlatList, Heading, Text, useToast } from "native-base";
+import { HStack, VStack, FlatList, Heading, Text, useToast, Center } from "native-base";
 
 import { Group } from "@components/Group";
 import { HomeHeader } from "@components/HomeHeader";
